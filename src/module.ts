@@ -11,7 +11,7 @@ import { defaultModuleOptions } from './config'
 import type { ModuleOptions } from './runtime/types/options'
 import { registerTypeTemplates } from './templates'
 
-const MODULE_NAME = 'nuxt-auth-sanctum'
+const MODULE_NAME = 'nuxt-auth-sanctum-fortify-two-factor'
 
 export type ModulePublicRuntimeConfig = { sanctum: ModuleOptions }
 

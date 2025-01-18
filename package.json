@@ -1,12 +1,12 @@
 {
-  "name": "nuxt-auth-sanctum",
+  "name": "nuxt-auth-sanctum-fortify-two-factor",
   "version": "0.5.4",
   "author": "Artem Manchenkov",
   "description": "Nuxt module for Laravel Sanctum authentication",
   "homepage": "https://manchenkoff.gitbook.io/nuxt-auth-sanctum/",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/manchenkoff/nuxt-auth-sanctum.git"
+    "url": "git+https://github.com/UsmanLhrPk/nuxt-auth-sanctum-fortify-two-factor.git"
   },
   "license": "MIT",
   "type": "module",

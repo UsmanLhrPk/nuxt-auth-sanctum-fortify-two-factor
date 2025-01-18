@@ -27,17 +27,17 @@ Complete documentation - [Nuxt Auth Sanctum docs](https://manchenkoff.gitbook.io
 
 ## Quick Setup
 
-1. Add `nuxt-auth-sanctum` dependency to your project
+1. Add `nuxt-auth-sanctum-fortify-two-factor` dependency to your project
 
 ```bash
-npx nuxi@latest module add nuxt-auth-sanctum
+npx nuxi@latest module add nuxt-auth-sanctum-fortify-two-factor
 ```
 
 2. Add any required configuration in your `nuxt.config.ts` file
 
 ```js
 export default defineNuxtConfig({
-    modules: ['nuxt-auth-sanctum'],
+    modules: ['nuxt-auth-sanctum-fortify-two-factor'],
 
     sanctum: {
         baseUrl: 'http://localhost:80', // Laravel API

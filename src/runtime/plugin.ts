@@ -8,7 +8,7 @@ import type { ModuleOptions } from './types/options'
 import { IDENTITY_LOADED_KEY } from './utils/constants'
 import { defineNuxtPlugin, updateAppConfig, useState, type NuxtApp } from '#app'
 
-const LOGGER_NAME = 'nuxt-auth-sanctum'
+const LOGGER_NAME = 'nuxt-auth-sanctum-fortify-two-factor'
 
 function createSanctumLogger(logLevel: number) {
   const envSuffix = import.meta.env.SSR ? 'ssr' : 'csr'
@@ -76,7 +76,7 @@ function handleIdentityLoadError(error: Error, logger: ConsolaInstance) {
 }
 
 export default defineNuxtPlugin({
-  name: 'nuxt-auth-sanctum',
+  name: 'nuxt-auth-sanctum-fortify-two-factor',
   async setup(_nuxtApp) {
     const nuxtApp = _nuxtApp as NuxtApp
     const options = useSanctumConfig()

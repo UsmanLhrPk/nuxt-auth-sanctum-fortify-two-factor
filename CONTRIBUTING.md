@@ -9,7 +9,7 @@ If you are working on a new feature, please create an issue on GitHub first. Thi
 You can clone the repo by running the following command:
 
 ```bash
-git clone git@github.com:manchenkoff/nuxt-auth-sanctum.git
+git clone git@github.com:UsmanLhrPk/nuxt-auth-sanctum-fortify-two-factor.git
 ```
 
 Then you should create a new branch with the following name convention:

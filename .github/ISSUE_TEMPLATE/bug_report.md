@@ -34,7 +34,7 @@ A clear and concise description of what actually happened.
 ```typescript
 // REPLACE WITH YOUR FILE CONTENT!
 export default defineNuxtConfig({
-    modules: ['nuxt-auth-sanctum'],
+    modules: ['nuxt-auth-sanctum-fortify-two-factor'],
 
     sanctum: {
         baseUrl: 'http://localhost:80',
