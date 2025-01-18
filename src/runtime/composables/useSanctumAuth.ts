@@ -18,6 +18,7 @@ export interface SanctumAuth<T> {
   confirmTwoFactorAuthentication: (credentials: { code: string }) => Promise<void>
   twoFactorChallenge: (credentials: { code?: string, recovery_code?: string }) => Promise<void>
   getRecoveryCodes: () => Promise<string[]>
+  regenerateRecoveryCodes: () => Promise<string[]>
   logout: () => Promise<void>
   refreshIdentity: () => Promise<void>
 }
@@ -118,7 +119,7 @@ export const useSanctumAuth = <T>(): SanctumAuth<T> => {
   /**
    * Redirect the user based on the two-factor authentication settings
    */
-  async function handleTwoFactorAuthentication(credentials: Record<string, any>, two_factor: boolean) {
+  async function handleTwoFactorAuthentication(credentials: { password: string }, two_factor: boolean) {
     if (two_factor) {
       if (
         options.redirect.onLoginWithTwoFactor === false
@@ -273,13 +274,29 @@ export const useSanctumAuth = <T>(): SanctumAuth<T> => {
       body: credentials,
     })
 
+    if (options.redirect.toRecoveryCodesOnConfirmingTwoFactor === undefined) {
+      throw new Error('`sanctum.redirect.toRecoveryCodesOnConfirmingTwoFactor` is not defined. Set it to '
+        + 'false if no redirect to recovery codes is required')
+    }
+
     if (options.redirect.toRecoveryCodesOnConfirmingTwoFactor) {
       if (options.endpoints.two_factor_confirm === void 0) {
         throw new Error('`sanctum.endpoints.two_factor_confirm` is not defined')
       }
     }
 
-    await afterLogin(response)
+    await afterLogin(response, !options.redirect.toRecoveryCodesOnConfirmingTwoFactor)
+
+    if (
+      options.redirect.toRecoveryCodesOnConfirmingTwoFactor === false
+      || currentRoute.path === options.redirect.toRecoveryCodesOnConfirmingTwoFactor
+    ) {
+      return
+    }
+
+    await nuxtApp.runWithContext(
+      async () => await navigateTo(options.redirect.toRecoveryCodesOnConfirmingTwoFactor as string),
+    )
   }
 
   /**
@@ -348,6 +365,34 @@ export const useSanctumAuth = <T>(): SanctumAuth<T> => {
   }
 
   /**
+   * Calls this endpoint to regenerate the recovery codes for the user
+   */
+  async function regenerateRecoveryCodes(): Promise<string[]> {
+    if (!isAuthenticated.value) {
+      if (!options.redirectIfUnauthenticated) {
+        throw new Error('Please login to generate two-factor recovery codes')
+      }
+      if (options.redirect.onAuthOnly === false || options.redirect.onAuthOnly === currentPath) {
+        return []
+      }
+      if (options.redirect.onAuthOnly === void 0) {
+        throw new Error('`sanctum.redirect.onAuthOnly` is not defined')
+      }
+      await nuxtApp.runWithContext(
+        async () => await navigateTo(options.redirect.onAuthOnly as string),
+      )
+    }
+
+    if (options.endpoints.two_factor_recovery_codes === void 0) {
+      throw new Error('`sanctum.endpoints.two_factor_recovery_codes` is not defined')
+    }
+
+    return await client(options.endpoints.two_factor_recovery_codes, {
+      method: 'post',
+    })
+  }
+
+  /**
    * Calls the logout endpoint and clears the user object
    */
   async function logout() {
@@ -393,7 +438,7 @@ export const useSanctumAuth = <T>(): SanctumAuth<T> => {
   /**
    * After login successfully handle the response and save the token if needed
    */
-  async function afterLogin(response: Record<string, any>) {
+  async function afterLogin(response: Record<string, any>, redirect: boolean = true) {
     const currentRoute = useRoute()
     const currentPath = trimTrailingSlash(currentRoute.path)
 
@@ -420,6 +465,10 @@ export const useSanctumAuth = <T>(): SanctumAuth<T> => {
       }
     }
 
+    if (redirect) {
+      return
+    }
+
     if (
       options.redirect.onLogin === false
       || currentRoute.path === options.redirect.onLogin
@@ -428,7 +477,7 @@ export const useSanctumAuth = <T>(): SanctumAuth<T> => {
     }
 
     if (options.redirect.onLogin === undefined) {
-      throw new Error('`sanctum.redirect.onLogin` is not defined')
+      throw new Error('`sanctum.redirect[redirectTo` is not defined')
     }
 
     await nuxtApp.runWithContext(
@@ -447,6 +496,7 @@ export const useSanctumAuth = <T>(): SanctumAuth<T> => {
     confirmTwoFactorAuthentication,
     twoFactorChallenge,
     getRecoveryCodes,
+    regenerateRecoveryCodes,
     logout,
     refreshIdentity,
   } as SanctumAuth<T>

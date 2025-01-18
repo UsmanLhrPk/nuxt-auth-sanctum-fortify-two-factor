@@ -29,7 +29,7 @@ export default defineNuxtConfig({
       user: '/api/user',
     },
     globalMiddleware: {
-      allow404WithoutAuth: true,
+      allow404WithoutAuth: false,
       enabled: false,
       prepend: false,
     },
