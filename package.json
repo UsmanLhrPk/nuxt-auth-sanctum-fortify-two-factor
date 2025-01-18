@@ -1,6 +1,6 @@
 {
   "name": "nuxt-auth-sanctum-fortify-two-factor",
-  "version": "0.5.4",
+  "version": "0.6.0",
   "author": "Artem Manchenkov",
   "description": "Nuxt module for Laravel Sanctum authentication",
   "homepage": "https://manchenkoff.gitbook.io/nuxt-auth-sanctum/",
