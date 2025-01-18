@@ -128,6 +128,24 @@ export interface RedirectOptions {
    */
   onLogin: string | false
   /**
+   * Route to redirect to when two-factor is required for login.
+   * If set to false, do nothing.
+   * @default '/two-factor-challenge'
+   */
+  onLoginWithTwoFactor: string | false
+  /**
+   * Route to redirect to when two-factor needs to be configured.
+   * If set to false, do nothing.
+   * @default '/two-factor-authentication'
+   */
+  onLoginWithConfigureTwoFactor: string | false
+  /**
+   * Route to redirect to if you need to show recovery codes right after confirming two-factor authentication.
+   * If undefined or set to false, do nothing.
+   * @default '/two-factor-recovery-codes'
+   */
+  toRecoveryCodesOnConfirmingTwoFactor: string | false
+  /**
    * Route to redirect to when user is not authenticated.
    * If set to false, do nothing.
    * @default '/'

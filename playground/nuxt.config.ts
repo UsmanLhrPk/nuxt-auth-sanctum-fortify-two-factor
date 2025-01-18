@@ -7,9 +7,14 @@ export default defineNuxtConfig({
   },
   compatibilityDate: '2024-09-28',
   sanctum: {
-    baseUrl: 'http://localhost:80',
+    baseUrl: 'http://localhost:8000',
     mode: 'cookie',
     logLevel: 5,
+    twoFactor: {
+      enabled: true,
+      confirm: true,
+      confirmPassword: true,
+    },
     redirect: {
       keepRequestedRoute: true,
       onAuthOnly: '/login',

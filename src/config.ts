@@ -14,7 +14,7 @@ export const defaultModuleOptions: ModuleOptions = {
   endpoints: {
     csrf: '/sanctum/csrf-cookie',
     login: '/login',
-    two_factor_qr_code: '/two-factor-qr-code',
+    two_factor_qr_code: '/user/two-factor-qr-code',
     two_factor_enable: '/user/two-factor-authentication',
     two_factor_confirm: '/user/confirmed-two-factor-authentication',
     two_factor_challenge: '/two-factor-challenge',
@@ -38,6 +38,9 @@ export const defaultModuleOptions: ModuleOptions = {
     onLogout: '/',
     onAuthOnly: '/login',
     onGuestOnly: '/',
+    onLoginWithTwoFactor: '/two-factor-challenge',
+    onLoginWithConfigureTwoFactor: '/two-factor-qr-code',
+    toRecoveryCodesOnConfirmingTwoFactor: '/two-factor-recovery-codes',
   },
   globalMiddleware: {
     enabled: false,
