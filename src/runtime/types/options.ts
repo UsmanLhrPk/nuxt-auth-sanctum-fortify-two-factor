@@ -13,6 +13,41 @@ export interface SanctumEndpoints {
    */
   login: string
   /**
+   * The endpoint enable two factor for a user.k
+   * @default "/two-factor-qr-code"
+   */
+  two_factor_enable: string
+  /**
+   * The endpoint fetch the QU code to configure two factory.
+   * @default "/user/two-factor-authentication"
+   */
+  two_factor_qr_code: string
+  /**
+   * The endpoint to complete two factor challenge.
+   * @default "//user/confirmed-two-factor-authentication"
+   */
+  two_factor_challenge: string
+  /**
+   * The endpoint to get users recovery codes.
+   * @default "/two-factor-challenge"
+   */
+  two_factor_recovery_codes: string
+  /**
+   * The endpoint confirm user s password.
+   * @default "/user/two-factor-recovery-codes"
+   */
+  two_factor_confirm: string
+  /**
+   * The endpoint to diable two factor
+   * @default "/user/two-factor-authentication"
+   */
+  two_factor_disable: string
+  /**
+   * The endpoint to send user credentials to authenticate.
+   * @default "/user/confirm-password"
+   */
+  confirm_password: string
+  /**
    * The endpoint to destroy current user session.
    * @default '/logout'
    */
@@ -22,6 +57,27 @@ export interface SanctumEndpoints {
    * @default '/api/user'
    */
   user: string
+}
+
+/**
+ * Definition of Laravel Sanctum endpoints to be used by the client.
+ */
+export interface FortifyTwoFactorOptions {
+  /**
+   * The option to enable two-factor authentication.
+   * @default false
+   */
+  enabled: boolean
+  /**
+   * The option to toggle two-factor code confirmation before login.
+   * @default true
+   */
+  confirm: boolean
+  /**
+   * The option to toggle password confirmation before enabling/disabling two-factor authentication.
+   * @default true
+   */
+  confirmPassword: boolean
 }
 
 /**
@@ -146,6 +202,15 @@ export interface ModuleOptions {
    * @default false
    */
   redirectIfUnauthenticated: boolean
+  /**
+   * Determine whether to redirect when the user got unauthenticated on any API request.
+   * @default {
+   *     enabled: false,
+   *     confirm: true,
+   *     confirmPassword: true,
+   *   }
+   */
+  twoFactor: Partial<FortifyTwoFactorOptions>
   /**
    * Laravel Sanctum endpoints to be used by the client.
    */

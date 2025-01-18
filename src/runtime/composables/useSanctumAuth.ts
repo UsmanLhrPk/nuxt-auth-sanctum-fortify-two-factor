@@ -1,4 +1,4 @@
-import { type Ref, computed } from 'vue'
+import { computed, type Ref } from 'vue'
 import { trimTrailingSlash } from '../utils/formatter'
 import { IDENTITY_LOADED_KEY } from '../utils/constants'
 import { useSanctumClient } from './useSanctumClient'
@@ -12,12 +12,17 @@ export interface SanctumAuth<T> {
   isAuthenticated: Ref<boolean>
   init: () => Promise<void>
   login: (credentials: Record<string, any>) => Promise<void>
+  enableTwoFactorAuthentication: () => Promise<void>
+  confirmPassword: (credentials: { password: string }) => Promise<void>
+  twoFactorChallenge: (credentials: { code?: string, recovery_code?: string }) => Promise<void>
+  getRecoveryCodes: () => Promise<string[]>
   logout: () => Promise<void>
   refreshIdentity: () => Promise<void>
 }
 
 export type TokenResponse = {
   token?: string
+  two_factor?: boolean
 }
 
 /**
@@ -101,43 +106,123 @@ export const useSanctumAuth = <T>(): SanctumAuth<T> => {
       body: credentials,
     })
 
-    if (options.mode === 'token') {
-      if (appConfig.tokenStorage === undefined) {
-        throw new Error('`sanctum.tokenStorage` is not defined in app.config.ts')
+    await afterLogin(response)
+  }
+
+  /**
+   * Calls the enable two-factor authentication endpoint to enable two-factor authentication for the user
+   */
+  async function enableTwoFactorAuthentication() {
+    if (!isAuthenticated.value) {
+      if (!options.redirectIfUnauthenticated) {
+        throw new Error('Please login to enable 2 Factor Authentication')
       }
-
-      if (response.token === undefined) {
-        throw new Error('Token was not returned from the API')
-      }
-
-      await appConfig.tokenStorage.set(nuxtApp, response.token)
-    }
-
-    await refreshIdentity()
-
-    if (options.redirect.keepRequestedRoute) {
-      const requestedRoute = currentRoute.query.redirect as string | undefined
-
-      if (requestedRoute && requestedRoute !== currentPath) {
-        await nuxtApp.runWithContext(async () => await navigateTo(requestedRoute))
+      if (options.redirect.onAuthOnly === false || options.redirect.onAuthOnly === currentPath) {
         return
       }
+      if (options.redirect.onAuthOnly === void 0) {
+        throw new Error('`sanctum.redirect.onAuthOnly` is not defined')
+      }
+      await nuxtApp.runWithContext(
+        async () => await navigateTo(options.redirect.onAuthOnly),
+      )
     }
 
-    if (
-      options.redirect.onLogin === false
-      || currentRoute.path === options.redirect.onLogin
-    ) {
-      return
+    if (options.endpoints.two_factor_enable === void 0) {
+      throw new Error('`sanctum.endpoints.two_factor_enable` is not defined')
     }
 
-    if (options.redirect.onLogin === undefined) {
-      throw new Error('`sanctum.redirect.onLogin` is not defined')
+    await client(options.endpoints.two_factor_enable, {
+      method: 'post',
+    })
+  }
+
+  /**
+   * Calls this endpoint to confirm the users' password
+   */
+  async function confirmPassword(credentials: { password: string }) {
+    if (!isAuthenticated.value) {
+      if (!options.redirectIfUnauthenticated) {
+        throw new Error('You must be logged in to perform this action')
+      }
+      if (options.redirect.onAuthOnly === false || options.redirect.onAuthOnly === currentPath) {
+        return
+      }
+      if (options.redirect.onAuthOnly === void 0) {
+        throw new Error('`sanctum.redirect.onAuthOnly` is not defined')
+      }
+      await nuxtApp.runWithContext(
+        async () => await navigateTo(options.redirect.onAuthOnly),
+      )
     }
 
-    await nuxtApp.runWithContext(
-      async () => await navigateTo(options.redirect.onLogin as string),
-    )
+    if (options.endpoints.confirm_password === void 0) {
+      throw new Error('`sanctum.endpoints.confirm_password` is not defined')
+    }
+
+    await client(options.endpoints.confirm_password, {
+      method: 'post',
+      body: credentials,
+    })
+  }
+
+  /**
+   * Calls this endpoint to complete the two-factor challenge and login
+   */
+  async function twoFactorChallenge(credentials) {
+    if (!isAuthenticated.value) {
+      if (!options.redirectIfUnauthenticated) {
+        throw new Error('Please login to complete two factor authentication')
+      }
+      if (options.redirect.onAuthOnly === false || options.redirect.onAuthOnly === currentPath) {
+        return
+      }
+      if (options.redirect.onAuthOnly === void 0) {
+        throw new Error('`sanctum.redirect.onAuthOnly` is not defined')
+      }
+      await nuxtApp.runWithContext(
+        async () => await navigateTo(options.redirect.onAuthOnly),
+      )
+    }
+
+    if (options.endpoints.two_factor_challenge === void 0) {
+      throw new Error('`sanctum.endpoints.two_factor_challenge` is not defined')
+    }
+
+    const response = await client(options.endpoints.two_factor_challenge, {
+      method: 'post',
+      body: credentials,
+    })
+
+    await afterLogin(response)
+  }
+
+  /**
+   * Calls this endpoint to get the recovery codes for the user
+   */
+  async function getRecoveryCodes(): string[] {
+    if (!isAuthenticated.value) {
+      if (!options.redirectIfUnauthenticated) {
+        throw new Error('Please login to retrieve Two Factor recovery codes')
+      }
+      if (options.redirect.onAuthOnly === false || options.redirect.onAuthOnly === currentPath) {
+        return
+      }
+      if (options.redirect.onAuthOnly === void 0) {
+        throw new Error('`sanctum.redirect.onAuthOnly` is not defined')
+      }
+      await nuxtApp.runWithContext(
+        async () => await navigateTo(options.redirect.onAuthOnly),
+      )
+    }
+
+    if (options.endpoints.two_factor_recovery_codes === void 0) {
+      throw new Error('`sanctum.endpoints.two_factor_recovery_codes` is not defined')
+    }
+
+    return await client(options.endpoints.two_factor_recovery_codes, {
+      method: 'get',
+    })
   }
 
   /**
@@ -183,11 +268,58 @@ export const useSanctumAuth = <T>(): SanctumAuth<T> => {
     )
   }
 
+  /**
+   * After login successfully handle the response and save the token if needed
+   */
+  async function afterLogin(response: Record<string, any>) {
+    if (options.mode === 'token') {
+      if (appConfig.tokenStorage === undefined) {
+        throw new Error('`sanctum.tokenStorage` is not defined in app.config.ts')
+      }
+
+      if (response.token === undefined) {
+        throw new Error('Token was not returned from the API')
+      }
+
+      await appConfig.tokenStorage.set(nuxtApp, response.token)
+    }
+
+    await refreshIdentity()
+
+    if (options.redirect.keepRequestedRoute) {
+      const requestedRoute = currentRoute.query.redirect as string | undefined
+
+      if (requestedRoute && requestedRoute !== currentPath) {
+        await nuxtApp.runWithContext(async () => await navigateTo(requestedRoute))
+        return
+      }
+    }
+
+    if (
+      options.redirect.onLogin === false
+      || currentRoute.path === options.redirect.onLogin
+    ) {
+      return
+    }
+
+    if (options.redirect.onLogin === undefined) {
+      throw new Error('`sanctum.redirect.onLogin` is not defined')
+    }
+
+    await nuxtApp.runWithContext(
+      async () => await navigateTo(options.redirect.onLogin as string),
+    )
+  }
+
   return {
     user,
     isAuthenticated,
     init,
     login,
+    enableTwoFactorAuthentication,
+    confirmPassword,
+    twoFactorChallenge,
+    getRecoveryCodes,
     logout,
     refreshIdentity,
   } as SanctumAuth<T>
