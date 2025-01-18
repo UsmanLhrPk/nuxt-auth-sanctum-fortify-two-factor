@@ -67,7 +67,7 @@ export interface FortifyTwoFactorOptions {
    * The option to enable two-factor authentication.
    * @default false
    */
-  enabled: boolean
+  enforce: boolean
   /**
    * The option to toggle two-factor code confirmation before login.
    * @default true

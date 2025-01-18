@@ -24,7 +24,8 @@ const twoFactorQrCodeError = ref('')
 try {
   const qrCodeResponse = await twoFactorQrSvg()
   qrCodeSVG.value = qrCodeResponse.svg
-} catch (e) {
+}
+catch (e) {
   console.log(e)
 }
 

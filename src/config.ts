@@ -7,7 +7,7 @@ export const defaultModuleOptions: ModuleOptions = {
   redirectIfAuthenticated: false,
   redirectIfUnauthenticated: false,
   twoFactor: {
-    enabled: false,
+    enforce: false,
     confirm: true,
     confirmPassword: true,
   },

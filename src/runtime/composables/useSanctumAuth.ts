@@ -6,10 +6,13 @@ import { useSanctumUser } from './useSanctumUser'
 import { useSanctumConfig } from './useSanctumConfig'
 import { useSanctumAppConfig } from './useSanctumAppConfig'
 import { navigateTo, useNuxtApp, useRoute, useState } from '#app'
+import type { User } from '~/src/runtime/types/user'
 
 export interface SanctumAuth<T> {
-  user: Ref<T | null>
+  user: Ref<T | User | null>
   isAuthenticated: Ref<boolean>
+  isVerified: Ref<boolean>
+  isAuthenticatedWithTwoFactor: Ref<boolean>
   init: () => Promise<void>
   login: (credentials: Record<string, any>) => Promise<void>
   enableTwoFactorAuthentication: () => Promise<void>
@@ -33,10 +36,10 @@ export type TokenResponse = {
  *
  * @template T Type of the user object
  */
-export const useSanctumAuth = <T>(): SanctumAuth<T> => {
+export const useSanctumAuth = <T>(): SanctumAuth<T | User | null> => {
   const nuxtApp = useNuxtApp()
 
-  const user = useSanctumUser<T>()
+  const user = useSanctumUser<T | User>()
   const client = useSanctumClient()
   const options = useSanctumConfig()
   const appConfig = useSanctumAppConfig()
@@ -44,7 +47,15 @@ export const useSanctumAuth = <T>(): SanctumAuth<T> => {
   const currentPath = trimTrailingSlash(currentRoute.path)
 
   const isAuthenticated = computed(() => {
-    return user.value !== null
+    return user.value
+  })
+
+  const isVerified = computed(() => {
+    return isAuthenticated && !!user.value?.email_verified_at
+  })
+
+  const isAuthenticatedWithTwoFactor = computed(() => {
+    return isAuthenticated && !!user.value?.two_factor_confirmed_at
   })
 
   const isIdentityLoaded = useState<boolean>(
@@ -108,8 +119,8 @@ export const useSanctumAuth = <T>(): SanctumAuth<T> => {
       body: credentials,
     })
 
-    if (options.twoFactor.enabled) {
-      await handleTwoFactorAuthentication(credentials, response.two_factor || false)
+    if (options.twoFactor.enforce) {
+      await handleTwoFactorAuthentication({ password: credentials.password }, response.two_factor || false)
     }
     else {
       await afterLogin(response)
@@ -488,6 +499,8 @@ export const useSanctumAuth = <T>(): SanctumAuth<T> => {
   return {
     user,
     isAuthenticated,
+    isVerified,
+    isAuthenticatedWithTwoFactor,
     init,
     login,
     enableTwoFactorAuthentication,

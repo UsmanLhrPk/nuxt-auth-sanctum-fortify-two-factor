@@ -11,7 +11,7 @@ export default defineNuxtConfig({
     mode: 'cookie',
     logLevel: 5,
     twoFactor: {
-      enabled: true,
+      enforce: true,
       confirm: true,
       confirmPassword: true,
     },
