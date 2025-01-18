@@ -4,14 +4,16 @@ import {
   ref,
   useSanctumAuth,
 } from '#imports'
+import ConfirmPassword from "~/components/ConfirmPassword.vue";
 
 definePageMeta({
   middleware: ['sanctum:auth'],
 })
 
-const { user, getRecoveryCodes } = useSanctumAuth()
+const { user, getRecoveryCodes, regenerateRecoveryCodes } = useSanctumAuth()
 
 const recoveryCodes = ref<string[]>([])
+const showConfirmPasswordForm = ref<boolean>(false)
 
 const twoFactorRecoveryCodesError = ref('')
 
@@ -19,8 +21,18 @@ try {
   recoveryCodes.value = await getRecoveryCodes()
 }
 catch (e) {
-  console.log(e)
-  twoFactorRecoveryCodesError.value = e
+  twoFactorRecoveryCodesError.value = e as string
+}
+
+const regenrateCodes = async () => {
+  try {
+    await regenerateRecoveryCodes()
+    recoveryCodes.value = await getRecoveryCodes()
+    showConfirmPasswordForm.value = false
+  }
+  catch (e) {
+    twoFactorRecoveryCodesError.value = e as string
+  }
 }
 
 const copyCodes = async () => {
@@ -82,6 +94,19 @@ const downloadCodes = () => {
   <div>
     <button @click="downloadCodes">
       Download Recovery Codes
+    </button>
+  </div>
+
+  <div v-show="showConfirmPasswordForm">
+    <ConfirmPassword
+      :after-confirm-password="regenrateCodes"
+      label="Regenerate Codes"
+    />
+  </div>
+
+  <div>
+    <button @click="showConfirmPasswordForm = true">
+      Regenerate Recovery Codes
     </button>
   </div>
 </template>

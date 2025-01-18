@@ -16,6 +16,9 @@ const { isAuthenticated, logout } = useSanctumAuth()
     <NuxtLink to="/login">
       Login
     </NuxtLink>
+    <NuxtLink to="/two-factor-recovery-codes">
+      Recovery Codes
+    </NuxtLink>
     <NuxtLink to="/logout">
       Logout
     </NuxtLink>
