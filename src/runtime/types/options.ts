@@ -128,6 +128,12 @@ export interface RedirectOptions {
    */
   onLogin: string | false
   /**
+   * Route to redirect to when user is authenticated but two-factor is not setup.
+   * If set to false, do nothing.
+   * @default '/two-factor-qr-code'
+   */
+  onTwoFactorOnly: string | false
+  /**
    * Route to redirect to when two-factor is required for login.
    * If set to false, do nothing.
    * @default '/two-factor-challenge'

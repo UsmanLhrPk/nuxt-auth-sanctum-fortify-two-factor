@@ -35,6 +35,7 @@ export const defaultModuleOptions: ModuleOptions = {
   redirect: {
     keepRequestedRoute: false,
     onLogin: '/',
+    onTwoFactorOnly: '/two-factor-qr-code',
     onLogout: '/',
     onAuthOnly: '/login',
     onGuestOnly: '/',

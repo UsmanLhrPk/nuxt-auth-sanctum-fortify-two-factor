@@ -4,10 +4,10 @@ import {
   ref,
   useSanctumAuth,
 } from '#imports'
-import ConfirmPassword from "~/components/ConfirmPassword.vue";
+import ConfirmPassword from '~/components/ConfirmPassword.vue'
 
 definePageMeta({
-  middleware: ['sanctum:auth'],
+  middleware: ['sanctum:two-factor-auth'],
 })
 
 const { user, getRecoveryCodes, regenerateRecoveryCodes } = useSanctumAuth()
@@ -50,7 +50,7 @@ const downloadCodes = () => {
   const url = window.URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = `two-factor-recovery-codes-${user.value.email}.txt`
+  a.download = `two-factor-recovery-codes-${user.value?.email}.txt`
   document.body.appendChild(a)
   a.click()
   window.URL.revokeObjectURL(url)

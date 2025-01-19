@@ -6,10 +6,9 @@ import { useSanctumUser } from './useSanctumUser'
 import { useSanctumConfig } from './useSanctumConfig'
 import { useSanctumAppConfig } from './useSanctumAppConfig'
 import { navigateTo, useNuxtApp, useRoute, useState } from '#app'
-import type { User } from '~/src/runtime/types/user'
 
-export interface SanctumAuth<T> {
-  user: Ref<T | User | null>
+export interface SanctumAuth<T extends BaseUser> {
+  user: Ref<T | null>
   isAuthenticated: Ref<boolean>
   isVerified: Ref<boolean>
   isAuthenticatedWithTwoFactor: Ref<boolean>
@@ -17,13 +16,23 @@ export interface SanctumAuth<T> {
   login: (credentials: Record<string, any>) => Promise<void>
   enableTwoFactorAuthentication: () => Promise<void>
   confirmPassword: (credentials: { password: string }) => Promise<void>
-  twoFactorQrSvg: () => Promise<void>
+  twoFactorQrSvg: () => Promise<{ svg?: string }>
   confirmTwoFactorAuthentication: (credentials: { code: string }) => Promise<void>
   twoFactorChallenge: (credentials: { code?: string, recovery_code?: string }) => Promise<void>
   getRecoveryCodes: () => Promise<string[]>
   regenerateRecoveryCodes: () => Promise<string[]>
   logout: () => Promise<void>
   refreshIdentity: () => Promise<void>
+}
+
+export interface BaseUser {
+  id: number
+  name: string
+  email: string
+  email_verified_at: Date
+  two_factor_confirmed_at?: Date
+  created_at: Date
+  updated_at: Date
 }
 
 export type TokenResponse = {
@@ -36,18 +45,16 @@ export type TokenResponse = {
  *
  * @template T Type of the user object
  */
-export const useSanctumAuth = <T>(): SanctumAuth<T | User | null> => {
+export const useSanctumAuth = <T extends BaseUser>(): SanctumAuth<T> => {
   const nuxtApp = useNuxtApp()
 
-  const user = useSanctumUser<T | User>()
+  const user = useSanctumUser<T>()
   const client = useSanctumClient()
   const options = useSanctumConfig()
   const appConfig = useSanctumAppConfig()
-  const currentRoute = useRoute()
-  const currentPath = trimTrailingSlash(currentRoute.path)
 
   const isAuthenticated = computed(() => {
-    return user.value
+    return !!user.value
   })
 
   const isVerified = computed(() => {
@@ -56,6 +63,14 @@ export const useSanctumAuth = <T>(): SanctumAuth<T | User | null> => {
 
   const isAuthenticatedWithTwoFactor = computed(() => {
     return isAuthenticated && !!user.value?.two_factor_confirmed_at
+  })
+
+  const currentRoute = computed(() => {
+    return useRoute()
+  })
+
+  const currentPath = computed(() => {
+    return trimTrailingSlash(currentRoute.value.path)
   })
 
   const isIdentityLoaded = useState<boolean>(
@@ -96,7 +111,7 @@ export const useSanctumAuth = <T>(): SanctumAuth<T | User | null> => {
 
       if (
         options.redirect.onLogin === false
-        || options.redirect.onLogin === currentPath
+        || options.redirect.onLogin === currentPath.value
       ) {
         return
       }
@@ -134,7 +149,7 @@ export const useSanctumAuth = <T>(): SanctumAuth<T | User | null> => {
     if (two_factor) {
       if (
         options.redirect.onLoginWithTwoFactor === false
-        || options.redirect.onLoginWithTwoFactor === currentPath
+        || options.redirect.onLoginWithTwoFactor === currentPath.value
       ) {
         return
       }
@@ -154,7 +169,7 @@ export const useSanctumAuth = <T>(): SanctumAuth<T | User | null> => {
 
       if (
         options.redirect.onLoginWithConfigureTwoFactor === false
-        || options.redirect.onLoginWithConfigureTwoFactor === currentPath
+        || options.redirect.onLoginWithConfigureTwoFactor === currentPath.value
       ) {
         return
       }
@@ -177,7 +192,7 @@ export const useSanctumAuth = <T>(): SanctumAuth<T | User | null> => {
       if (!options.redirectIfUnauthenticated) {
         throw new Error('Please login to enable 2 Factor Authentication')
       }
-      if (options.redirect.onAuthOnly === false || options.redirect.onAuthOnly === currentPath) {
+      if (options.redirect.onAuthOnly === false || options.redirect.onAuthOnly === currentPath.value) {
         return
       }
       if (options.redirect.onAuthOnly === void 0) {
@@ -201,14 +216,11 @@ export const useSanctumAuth = <T>(): SanctumAuth<T | User | null> => {
    * Calls this endpoint to confirm the users' password
    */
   async function confirmPassword(credentials: { password: string }) {
-    const currentRoute = useRoute()
-    const currentPath = trimTrailingSlash(currentRoute.path)
-
     if (!isAuthenticated.value) {
       if (!options.redirectIfUnauthenticated) {
         throw new Error('You must be logged in to perform this action')
       }
-      if (options.redirect.onAuthOnly === false || options.redirect.onAuthOnly === currentPath) {
+      if (options.redirect.onAuthOnly === false || options.redirect.onAuthOnly === currentPath.value) {
         return
       }
       if (options.redirect.onAuthOnly === void 0) {
@@ -237,7 +249,7 @@ export const useSanctumAuth = <T>(): SanctumAuth<T | User | null> => {
       if (!options.redirectIfUnauthenticated) {
         throw new Error('Please login to configure two factor authentication')
       }
-      if (options.redirect.onAuthOnly === false || options.redirect.onAuthOnly === currentPath) {
+      if (options.redirect.onAuthOnly === false || options.redirect.onAuthOnly === currentPath.value) {
         return
       }
       if (options.redirect.onAuthOnly === void 0) {
@@ -265,7 +277,7 @@ export const useSanctumAuth = <T>(): SanctumAuth<T | User | null> => {
       if (!options.redirectIfUnauthenticated) {
         throw new Error('Please login to confirm two factor authentication')
       }
-      if (options.redirect.onAuthOnly === false || options.redirect.onAuthOnly === currentPath) {
+      if (options.redirect.onAuthOnly === false || options.redirect.onAuthOnly === currentPath.value) {
         return
       }
       if (options.redirect.onAuthOnly === void 0) {
@@ -300,9 +312,18 @@ export const useSanctumAuth = <T>(): SanctumAuth<T | User | null> => {
 
     if (
       options.redirect.toRecoveryCodesOnConfirmingTwoFactor === false
-      || currentRoute.path === options.redirect.toRecoveryCodesOnConfirmingTwoFactor
+      || currentRoute.value.path === options.redirect.toRecoveryCodesOnConfirmingTwoFactor
     ) {
       return
+    }
+
+    if (options.redirect.keepRequestedRoute) {
+      const requestedRoute = currentRoute.value.query.redirect as string | undefined
+
+      if (requestedRoute && requestedRoute !== currentPath.value) {
+        await nuxtApp.runWithContext(async () => await navigateTo(requestedRoute))
+        return
+      }
     }
 
     await nuxtApp.runWithContext(
@@ -321,7 +342,7 @@ export const useSanctumAuth = <T>(): SanctumAuth<T | User | null> => {
 
       if (
         options.redirect.onLogin === false
-        || options.redirect.onLogin === currentPath
+        || options.redirect.onLogin === currentPath.value
       ) {
         return
       }
@@ -355,7 +376,7 @@ export const useSanctumAuth = <T>(): SanctumAuth<T | User | null> => {
       if (!options.redirectIfUnauthenticated) {
         throw new Error('Please login to retrieve Two Factor recovery codes')
       }
-      if (options.redirect.onAuthOnly === false || options.redirect.onAuthOnly === currentPath) {
+      if (options.redirect.onAuthOnly === false || options.redirect.onAuthOnly === currentPath.value) {
         return []
       }
       if (options.redirect.onAuthOnly === void 0) {
@@ -383,7 +404,7 @@ export const useSanctumAuth = <T>(): SanctumAuth<T | User | null> => {
       if (!options.redirectIfUnauthenticated) {
         throw new Error('Please login to generate two-factor recovery codes')
       }
-      if (options.redirect.onAuthOnly === false || options.redirect.onAuthOnly === currentPath) {
+      if (options.redirect.onAuthOnly === false || options.redirect.onAuthOnly === currentPath.value) {
         return []
       }
       if (options.redirect.onAuthOnly === void 0) {
@@ -411,9 +432,6 @@ export const useSanctumAuth = <T>(): SanctumAuth<T | User | null> => {
       throw new Error('User is not authenticated')
     }
 
-    const currentRoute = useRoute()
-    const currentPath = trimTrailingSlash(currentRoute.path)
-
     if (options.endpoints.logout === undefined) {
       throw new Error('`sanctum.endpoints.logout` is not defined')
     }
@@ -432,7 +450,7 @@ export const useSanctumAuth = <T>(): SanctumAuth<T | User | null> => {
 
     if (
       options.redirect.onLogout === false
-      || currentPath === options.redirect.onLogout
+      || currentPath.value === options.redirect.onLogout
     ) {
       return
     }
@@ -450,9 +468,6 @@ export const useSanctumAuth = <T>(): SanctumAuth<T | User | null> => {
    * After login successfully handle the response and save the token if needed
    */
   async function afterLogin(response: Record<string, any>, redirect: boolean = true) {
-    const currentRoute = useRoute()
-    const currentPath = trimTrailingSlash(currentRoute.path)
-
     if (options.mode === 'token') {
       if (appConfig.tokenStorage === undefined) {
         throw new Error('`sanctum.tokenStorage` is not defined in app.config.ts')
@@ -468,9 +483,9 @@ export const useSanctumAuth = <T>(): SanctumAuth<T | User | null> => {
     await refreshIdentity()
 
     if (options.redirect.keepRequestedRoute) {
-      const requestedRoute = currentRoute.query.redirect as string | undefined
+      const requestedRoute = currentRoute.value.query.redirect as string | undefined
 
-      if (requestedRoute && requestedRoute !== currentPath) {
+      if (requestedRoute && requestedRoute !== currentPath.value) {
         await nuxtApp.runWithContext(async () => await navigateTo(requestedRoute))
         return
       }
@@ -482,7 +497,7 @@ export const useSanctumAuth = <T>(): SanctumAuth<T | User | null> => {
 
     if (
       options.redirect.onLogin === false
-      || currentRoute.path === options.redirect.onLogin
+      || currentRoute.value.path === options.redirect.onLogin
     ) {
       return
     }

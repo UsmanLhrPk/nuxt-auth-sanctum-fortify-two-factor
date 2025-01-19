@@ -2,7 +2,7 @@
 import { definePageMeta, useSanctumAuth } from '#imports'
 
 definePageMeta({
-  middleware: ['sanctum:auth'],
+  middleware: ['sanctum:two-factor-auth'],
 })
 
 const { isAuthenticated, user, refreshIdentity } = useSanctumAuth()

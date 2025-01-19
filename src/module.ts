@@ -60,6 +60,14 @@ export default defineNuxtModule<ModuleOptions>({
         path: resolver.resolve('./runtime/middleware/sanctum.auth'),
       })
       addRouteMiddleware({
+        name: 'sanctum:verified',
+        path: resolver.resolve('./runtime/middleware/sanctum.verified'),
+      })
+      addRouteMiddleware({
+        name: 'sanctum:two-factor-auth',
+        path: resolver.resolve('./runtime/middleware/sanctum.two-factor-auth'),
+      })
+      addRouteMiddleware({
         name: 'sanctum:guest',
         path: resolver.resolve('./runtime/middleware/sanctum.guest'),
       })

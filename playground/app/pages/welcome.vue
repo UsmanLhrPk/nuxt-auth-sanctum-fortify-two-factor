@@ -2,7 +2,7 @@
 import { definePageMeta } from '#imports'
 
 definePageMeta({
-  middleware: ['sanctum:auth'],
+  middleware: ['sanctum:two-factor-auth'],
 })
 </script>
 
