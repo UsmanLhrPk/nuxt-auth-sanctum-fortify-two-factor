@@ -1,6 +1,10 @@
 # Changelog
 
 
+## v0.6.3
+
+[compare changes](https://github.com/UsmanLhrPk/nuxt-auth-sanctum-fortify-two-factor/compare/v0.6.2...v0.6.3)
+
 ## v0.6.2
 
 [compare changes](https://github.com/UsmanLhrPk/nuxt-auth-sanctum-fortify-two-factor/compare/v0.6.1...v0.6.2)
